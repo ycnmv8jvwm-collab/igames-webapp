@@ -1049,10 +1049,20 @@ function submitBooking() {
   bookings.unshift(newBooking);
   localStorage.setItem('igames_bookings', JSON.stringify(bookings));
 
-  // Отправка данных боту
-  if (tg) {
-    tg.sendData(JSON.stringify({ type: 'booking', ...newBooking }));
-  }
+  // Отправка данных на API бота
+  const API_URL = "https://igames-production.up.railway.app";
+  try {
+    await fetch(API_URL + "/api/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...newBooking,
+        userId: user?.id,
+        fullName: user ? (user.first_name + ' ' + (user.last_name || '')) : 'Неизвестно',
+        username: user?.username || '',
+      }),
+    });
+  } catch(e) { console.error(e); }
 
   document.getElementById('booking-form').style.display = 'none';
   document.getElementById('booking-success').classList.add('active');
@@ -1113,9 +1123,19 @@ function renderProfile() {
 function sendContactMsg() {
   const msg = document.getElementById('contact-msg').value.trim();
   if (!msg) { showToast('Введите сообщение'); return; }
-  if (tg) {
-    tg.sendData(JSON.stringify({ type: 'contact', message: msg, userId: user?.id }));
-  }
+  const API_URL = "https://igames-production.up.railway.app";
+  try {
+    await fetch(API_URL + "/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: msg,
+        userId: user?.id,
+        fullName: user ? (user.first_name + ' ' + (user.last_name || '')) : 'Неизвестно',
+        username: user?.username || '',
+      }),
+    });
+  } catch(e) { console.error(e); }
   document.getElementById('contact-msg').value = '';
   showToast('✅ Сообщение отправлено!');
 }
