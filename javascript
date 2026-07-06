@@ -1,10 +1,277 @@
-bot.on('web_app_data', async (ctx) => {
-  const data = JSON.parse(ctx.webAppData.data);
-  if (data.action === 'booking') {
-    // Отправляем админу уведомление о брони
-    await ctx.telegram.sendMessage(ADMIN_CHAT_ID, `Новая бронь! ...`);
-  } else if (data.action === 'contact') {
-    // Пересылаем сообщение пользователя админу
-    await ctx.telegram.sendMessage(ADMIN_CHAT_ID, `Сообщение: ${data.message}`);
+// ══ Telegram WebApp init ══
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0d0d14');
+  tg.setBackgroundColor('#0d0d14');
+}
+
+const user = tg?.initDataUnsafe?.user;
+
+// ══ Отправка данных боту (без токенов и chat_id) ══
+function sendToBot(data) {
+  if (tg) {
+    tg.sendData(JSON.stringify(data));
+  } else {
+    // Для тестирования вне Telegram – сохраняем в консоль и localStorage
+    console.warn('Telegram WebApp не доступен, данные сохранены в localStorage');
+    localStorage.setItem('igames_test_data', JSON.stringify(data));
+    showToast('✅ Данные отправлены (тестовый режим)');
   }
-});
+}
+
+// ══ Данные ══
+const ZONE_LABELS = { pc: 'Общий зал', vip: 'VIP зал', ps: 'PlayStation' };
+const ZONE_SEATS  = { pc: 11, vip: 5, ps: 1 };
+const DAY_NAMES   = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const MONTH_NAMES = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
+let booking = { zone: null, date: null, dateStr: null, time: null, seat: null };
+let currentStep = 0;
+let bookings = JSON.parse(localStorage.getItem('igames_bookings') || '[]');
+
+// ══ Страницы ══
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = ['book','price','info','profile','contact'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)]?.classList.add('active');
+  if (id === 'profile') renderProfile();
+  window.scrollTo(0, 0);
+}
+
+// ══ Booking steps ══
+function nextStep() {
+  if (currentStep < 4) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep++;
+    document.getElementById('step-' + currentStep).classList.add('active');
+    updateDots();
+    if (currentStep === 1) buildDates();
+    if (currentStep === 3) buildSeats();
+    if (currentStep === 4) buildSummary();
+    window.scrollTo(0, 0);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep--;
+    document.getElementById('step-' + currentStep).classList.add('active');
+    updateDots();
+    window.scrollTo(0, 0);
+  }
+}
+
+function updateDots() {
+  for (let i = 0; i < 5; i++) {
+    const d = document.getElementById('dot-' + i);
+    d.classList.remove('active', 'done');
+    if (i < currentStep) d.classList.add('done');
+    else if (i === currentStep) d.classList.add('active');
+  }
+}
+
+// ══ Зона ══
+function selectZone(zone, el) {
+  document.querySelectorAll('.zone-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  booking.zone = zone;
+  document.getElementById('btn-zone').disabled = false;
+}
+
+// ══ Даты ══
+function buildDates() {
+  const grid = document.getElementById('date-grid');
+  grid.innerHTML = '';
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const el = document.createElement('div');
+    el.className = 'date-btn' + (i === 0 ? ' today' : '');
+    const dayName = i === 0 ? 'Сег' : i === 1 ? 'Завт' : DAY_NAMES[d.getDay()];
+    el.innerHTML = `<div class="day-name">${dayName}</div><div class="day-num">${d.getDate()}</div><div class="month">${MONTH_NAMES[d.getMonth()]}</div>`;
+    const dateStr = d.toISOString().split('T')[0];
+    el.onclick = () => {
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      booking.date = d;
+      booking.dateStr = dateStr;
+      document.getElementById('btn-date').disabled = false;
+    };
+    grid.appendChild(el);
+  }
+}
+
+// ══ Время ══
+function onTimeInput(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 2) v = v.slice(0,2) + ':' + v.slice(2,4);
+  el.value = v;
+  const match = v.match(/^(\d{2}):(\d{2})$/);
+  const valid = match && parseInt(match[1]) < 24 && parseInt(match[2]) < 60;
+  booking.time = valid ? v : null;
+  document.getElementById('btn-time').disabled = !valid;
+}
+
+// ══ Места ══
+function buildSeats() {
+  const grid = document.getElementById('seats-grid');
+  grid.innerHTML = '';
+  const total = ZONE_SEATS[booking.zone] || 1;
+  // Занятые места (симуляция на основе локальных броней)
+  const busySeats = new Set();
+  for (const b of bookings) {
+    if (b.zone === booking.zone && b.dateStr === booking.dateStr && b.status !== 'cancelled') {
+      busySeats.add(b.seat);
+    }
+  }
+  for (let i = 1; i <= total; i++) {
+    const el = document.createElement('div');
+    const busy = busySeats.has(i);
+    el.className = 'seat-btn ' + (busy ? 'busy' : 'free');
+    el.textContent = i;
+    if (!busy) {
+      el.onclick = () => {
+        document.querySelectorAll('.seat-btn.free').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        booking.seat = i;
+        document.getElementById('btn-seat').disabled = false;
+      };
+    }
+    grid.appendChild(el);
+  }
+}
+
+// ══ Summary ══
+function buildSummary() {
+  const d = booking.date;
+  const dateLabel = d ? `${d.getDate()} ${MONTH_NAMES[d.getMonth()].charAt(0).toUpperCase() + MONTH_NAMES[d.getMonth()].slice(1)}, ${DAY_NAMES[d.getDay()]}` : '—';
+  document.getElementById('sum-zone').textContent = ZONE_LABELS[booking.zone] || '—';
+  document.getElementById('sum-seat').textContent = '№' + booking.seat;
+  document.getElementById('sum-date').textContent = dateLabel;
+  document.getElementById('sum-time').textContent = booking.time + ' (держится 15 мин)';
+}
+
+// ══ Submit (отправка через sendData) ══
+async function submitBooking() {
+  const comment = document.getElementById('comment-input').value.trim();
+  const newBooking = {
+    id: Date.now(),
+    zone: booking.zone,
+    zoneLabel: ZONE_LABELS[booking.zone],
+    dateStr: booking.dateStr,
+    time: booking.time,
+    seat: booking.seat,
+    comment,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  bookings.unshift(newBooking);
+  localStorage.setItem('igames_bookings', JSON.stringify(bookings));
+
+  // Отправляем данные боту
+  sendToBot({
+    action: 'booking',
+    booking: newBooking,
+    user: user ? {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username
+    } : null
+  });
+
+  // Показываем экран успеха
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('booking-success').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function resetBooking() {
+  booking = { zone: null, date: null, dateStr: null, time: null, seat: null };
+  currentStep = 0;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-0').classList.add('active');
+  document.querySelectorAll('.zone-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('time-input').value = '';
+  document.getElementById('comment-input').value = '';
+  document.getElementById('btn-zone').disabled = true;
+  document.getElementById('btn-time').disabled = true;
+  document.getElementById('btn-seat').disabled = true;
+  updateDots();
+  document.getElementById('booking-form').style.display = 'block';
+  document.getElementById('booking-success').classList.remove('active');
+}
+
+// ══ Profile ══
+function renderProfile() {
+  if (user) {
+    document.getElementById('profile-name').textContent =
+      (user.first_name || '') + ' ' + (user.last_name || '');
+    document.getElementById('profile-sub').textContent =
+      user.username ? '@' + user.username : 'Участник iGames';
+  }
+  const active = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed');
+  document.getElementById('stat-total').textContent = bookings.length;
+  document.getElementById('stat-active').textContent = active.length;
+
+  const container = document.getElementById('bookings-items');
+  const empty = document.getElementById('bookings-empty');
+  container.innerHTML = '';
+  if (bookings.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    bookings.slice(0, 10).forEach(b => {
+      const statusMap = { pending: ['⏳ Ожидает', 'status-pending'], confirmed: ['✅ Принято', 'status-confirmed'], cancelled: ['❌ Отменено', 'status-cancelled'] };
+      const [statusText, statusClass] = statusMap[b.status] || ['—', ''];
+      container.innerHTML += `
+        <div class="booking-item">
+          <div>
+            <div class="booking-zone">${b.zoneLabel}, место №${b.seat}</div>
+            <div class="booking-time">📅 ${b.dateStr}  🕐 ${b.time}</div>
+          </div>
+          <div class="booking-status ${statusClass}">${statusText}</div>
+        </div>`;
+    });
+  }
+}
+
+// ══ Contact (отправка через sendData) ══
+async function sendContactMsg() {
+  const msg = document.getElementById('contact-msg').value.trim();
+  if (!msg) { showToast('Введите сообщение'); return; }
+
+  sendToBot({
+    action: 'contact',
+    message: msg,
+    user: user ? {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username
+    } : null
+  });
+
+  document.getElementById('contact-msg').value = '';
+  showToast('✅ Сообщение отправлено!');
+}
+
+// ══ Toast ══
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init profile name
+if (user) {
+  document.getElementById('profile-name').textContent =
+    (user.first_name || '') + ' ' + (user.last_name || '');
+}
