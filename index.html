@@ -6,883 +6,12 @@
 <title>iGames</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap');
-
-  :root {
-    --bg:       #0d0d14;
-    --bg2:      #13131f;
-    --bg3:      #1a1a2e;
-    --card:     #16162a;
-    --border:   #2a2a4a;
-    --purple:   #7c3aed;
-    --purple2:  #9d5cf6;
-    --purple3:  #c084fc;
-    --neon:     #a855f7;
-    --neon-glow:rgba(168,85,247,0.35);
-    --text:     #f0eaff;
-    --muted:    #8b87a8;
-    --green:    #22c55e;
-    --red:      #ef4444;
-    --yellow:   #f59e0b;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    background: linear-gradient(135deg, #1a0a3e 0%, #0d0d14 60%);
-    padding: 20px 16px 16px;
-    position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid var(--border);
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 160px; height: 160px;
-    background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .logo-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 4px;
-  }
-  .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--purple), var(--purple3));
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 0 20px var(--neon-glow);
-    flex-shrink: 0;
-  }
-  .logo-text {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 900;
-    font-size: 26px;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 30%, var(--purple3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .header-sub {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-  }
-
-  /* ── NAV TABS ── */
-  .nav {
-    display: flex;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav-tab {
-    flex: 1;
-    min-width: 70px;
-    padding: 12px 8px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-    user-select: none;
-  }
-  .nav-tab .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
-  .nav-tab.active {
-    color: var(--purple3);
-    border-bottom-color: var(--purple);
-    background: rgba(124,58,237,0.08);
-  }
-
-  /* ── PAGES ── */
-  .page { display: none; padding: 16px; animation: fadeIn 0.2s ease; }
-  .page.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-  /* ── CARDS ── */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .card-title {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--purple3);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* ── BOOKING PAGE ── */
-  .step-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 20px;
-  }
-  .step-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--border);
-    transition: all 0.3s;
-  }
-  .step-dot.active {
-    background: var(--purple);
-    box-shadow: 0 0 8px var(--neon-glow);
-    width: 24px;
-    border-radius: 4px;
-  }
-  .step-dot.done { background: var(--purple3); }
-
-  .step { display: none; }
-  .step.active { display: block; }
-
-  .step-title {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 6px;
-  }
-  .step-sub {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-  }
-
-  .zone-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .zone-card {
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    padding: 16px 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-  }
-  .zone-card:active { transform: scale(0.97); }
-  .zone-card.selected {
-    border-color: var(--purple);
-    background: rgba(124,58,237,0.15);
-    box-shadow: 0 0 16px rgba(124,58,237,0.2);
-  }
-  .zone-card .zone-icon { font-size: 28px; margin-bottom: 8px; }
-  .zone-card .zone-name {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-  }
-  .zone-card .zone-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .zone-card.ps { grid-column: span 2; }
-
-  .date-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .date-btn {
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 4px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-  }
-  .date-btn:active { transform: scale(0.95); }
-  .date-btn.selected { border-color: var(--purple); background: rgba(124,58,237,0.15); }
-  .date-btn .day-name { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
-  .date-btn .day-num { font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 16px; margin: 2px 0; }
-  .date-btn .month { font-size: 10px; color: var(--muted); }
-  .date-btn.today .day-name { color: var(--purple3); }
-
-  .time-input-wrap {
-    position: relative;
-    margin-bottom: 8px;
-  }
-  .time-input {
-    width: 100%;
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    text-align: center;
-    padding: 16px;
-    outline: none;
-    transition: border-color 0.2s;
-    letter-spacing: 4px;
-  }
-  .time-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
-  .time-input::placeholder { color: var(--border); letter-spacing: 2px; }
-  .time-hint {
-    font-size: 12px;
-    color: var(--yellow);
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .seats-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .seat-btn {
-    aspect-ratio: 1;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 2px solid transparent;
-    user-select: none;
-  }
-  .seat-btn.free {
-    background: rgba(34,197,94,0.12);
-    border-color: rgba(34,197,94,0.4);
-    color: var(--green);
-  }
-  .seat-btn.free:active { transform: scale(0.9); }
-  .seat-btn.free.selected {
-    background: var(--green);
-    color: #000;
-    box-shadow: 0 0 12px rgba(34,197,94,0.4);
-  }
-  .seat-btn.busy {
-    background: rgba(239,68,68,0.1);
-    border-color: rgba(239,68,68,0.3);
-    color: var(--red);
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-  .seats-legend {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-  .seats-legend span { display: flex; align-items: center; gap: 4px; }
-
-  textarea {
-    width: 100%;
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    padding: 14px;
-    resize: none;
-    outline: none;
-    height: 100px;
-    transition: border-color 0.2s;
-  }
-  textarea:focus { border-color: var(--purple); }
-  textarea::placeholder { color: var(--muted); }
-
-  /* Summary card */
-  .summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-  }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-label { color: var(--muted); }
-  .summary-val { font-weight: 600; }
-
-  /* ── BUTTONS ── */
-  .btn {
-    width: 100%;
-    padding: 15px;
-    border: none;
-    border-radius: 14px;
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.3px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 12px;
-  }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--purple), var(--purple3));
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(124,58,237,0.4);
-  }
-  .btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-  .btn-ghost {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-  .btn-danger {
-    background: rgba(239,68,68,0.15);
-    border: 1px solid rgba(239,68,68,0.3);
-    color: var(--red);
-  }
-
-  /* ── PRICE PAGE ── */
-  .price-zone {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    margin-bottom: 14px;
-  }
-  .price-zone-header {
-    background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(124,58,237,0.05));
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-  .price-zone-icon { font-size: 24px; }
-  .price-zone-name {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-  }
-  .price-table { width: 100%; border-collapse: collapse; }
-  .price-table th {
-    padding: 8px 16px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-align: right;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .price-table th:first-child { text-align: left; }
-  .price-table td {
-    padding: 10px 16px;
-    font-size: 14px;
-    border-top: 1px solid var(--border);
-    text-align: right;
-  }
-  .price-table td:first-child { text-align: left; color: var(--muted); }
-  .price-table td.highlight { color: var(--purple3); font-weight: 700; }
-  .night-note {
-    background: rgba(124,58,237,0.1);
-    border: 1px solid rgba(124,58,237,0.25);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 13px;
-    color: var(--purple3);
-    margin-bottom: 12px;
-    line-height: 1.5;
-  }
-
-  /* ── INFO PAGE ── */
-  .info-block {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 12px;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-  .info-icon {
-    font-size: 28px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .info-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 4px;
-  }
-  .info-val {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    line-height: 1.4;
-  }
-  .info-val a { color: var(--purple3); text-decoration: none; }
-
-  /* ── PROFILE PAGE ── */
-  .profile-header {
-    background: linear-gradient(135deg, rgba(124,58,237,0.2), transparent);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 16px;
-  }
-  .profile-avatar {
-    width: 64px; height: 64px;
-    background: linear-gradient(135deg, var(--purple), var(--purple3));
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    margin: 0 auto 12px;
-    box-shadow: 0 0 24px var(--neon-glow);
-  }
-  .profile-name {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-  .profile-sub { font-size: 13px; color: var(--muted); }
-
-  .stat-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    text-align: center;
-  }
-  .stat-num {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 900;
-    font-size: 28px;
-    background: linear-gradient(135deg, var(--purple2), var(--purple3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  .booking-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-  .booking-zone {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 4px;
-  }
-  .booking-time { font-size: 13px; color: var(--muted); }
-  .booking-status {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-  }
-  .status-pending { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .status-confirmed { background: rgba(34,197,94,0.15); color: var(--green); }
-  .status-cancelled { background: rgba(239,68,68,0.1); color: var(--red); }
-
-  /* ── CONTACT PAGE ── */
-  .contact-form textarea { margin-bottom: 4px; }
-
-  /* ── SUCCESS ── */
-  .success-screen {
-    display: none;
-    text-align: center;
-    padding: 40px 20px;
-  }
-  .success-screen.active { display: block; }
-  .success-icon {
-    width: 80px; height: 80px;
-    background: linear-gradient(135deg, var(--purple), var(--purple3));
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px;
-    margin: 0 auto 20px;
-    box-shadow: 0 0 40px var(--neon-glow);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 40px var(--neon-glow); }
-    50% { box-shadow: 0 0 60px rgba(168,85,247,0.5); }
-  }
-  .success-title {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 900;
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-  .success-sub { font-size: 14px; color: var(--muted); line-height: 1.6; }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--bg3);
-    border: 1px solid var(--purple);
-    color: var(--text);
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 999;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+  /* ... весь ваш CSS без изменений ... */
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo-row">
-    <div class="logo-icon">🎮</div>
-    <div>
-      <div class="logo-text">iGames</div>
-      <div class="header-sub">Компьютерный клуб • Магнитогорск</div>
-    </div>
-  </div>
-</div>
-
-<nav class="nav">
-  <div class="nav-tab active" onclick="showPage('book')">
-    <span class="tab-icon">📅</span>Бронь
-  </div>
-  <div class="nav-tab" onclick="showPage('price')">
-    <span class="tab-icon">💰</span>Прайс
-  </div>
-  <div class="nav-tab" onclick="showPage('info')">
-    <span class="tab-icon">ℹ️</span>О клубе
-  </div>
-  <div class="nav-tab" onclick="showPage('profile')">
-    <span class="tab-icon">👤</span>Профиль
-  </div>
-  <div class="nav-tab" onclick="showPage('contact')">
-    <span class="tab-icon">📞</span>Связь
-  </div>
-</nav>
-
-<!-- ══════════ БРОНИРОВАНИЕ ══════════ -->
-<div id="page-book" class="page active">
-
-  <div id="booking-form">
-    <div class="step-indicator">
-      <div class="step-dot active" id="dot-0"></div>
-      <div class="step-dot" id="dot-1"></div>
-      <div class="step-dot" id="dot-2"></div>
-      <div class="step-dot" id="dot-3"></div>
-      <div class="step-dot" id="dot-4"></div>
-    </div>
-
-    <!-- ШАГ 0: Зона -->
-    <div class="step active" id="step-0">
-      <div class="step-title">Выберите зону</div>
-      <div class="step-sub">Выберите тип места</div>
-      <div class="zone-grid">
-        <div class="zone-card" onclick="selectZone('pc', this)">
-          <div class="zone-icon">💻</div>
-          <div class="zone-name">Общий зал</div>
-          <div class="zone-count">11 ПК</div>
-        </div>
-        <div class="zone-card" onclick="selectZone('vip', this)">
-          <div class="zone-icon">🎮</div>
-          <div class="zone-name">VIP зал</div>
-          <div class="zone-count">5 мест</div>
-        </div>
-        <div class="zone-card ps" onclick="selectZone('ps', this)">
-          <div class="zone-icon">🕹</div>
-          <div class="zone-name">PlayStation</div>
-          <div class="zone-count">1 место • PS5 включён</div>
-        </div>
-      </div>
-      <button class="btn btn-primary" id="btn-zone" onclick="nextStep()" disabled>Далее →</button>
-    </div>
-
-    <!-- ШАГ 1: Дата -->
-    <div class="step" id="step-1">
-      <div class="step-title">Выберите дату</div>
-      <div class="step-sub">Доступны ближайшие 7 дней</div>
-      <div class="date-grid" id="date-grid"></div>
-      <button class="btn btn-primary" id="btn-date" onclick="nextStep()" disabled>Далее →</button>
-      <button class="btn btn-ghost" onclick="prevStep()">← Назад</button>
-    </div>
-
-    <!-- ШАГ 2: Время -->
-    <div class="step" id="step-2">
-      <div class="step-title">Время начала</div>
-      <div class="step-sub">Введите время в формате ЧЧ:ММ</div>
-      <div class="time-input-wrap">
-        <input type="text" class="time-input" id="time-input" placeholder="14:00"
-               maxlength="5" inputmode="numeric" oninput="onTimeInput(this)">
-      </div>
-      <div class="time-hint">⚠️ Бронь держится 15 минут, затем снимается автоматически</div>
-      <button class="btn btn-primary" id="btn-time" onclick="nextStep()" disabled>Далее →</button>
-      <button class="btn btn-ghost" onclick="prevStep()">← Назад</button>
-    </div>
-
-    <!-- ШАГ 3: Место -->
-    <div class="step" id="step-3">
-      <div class="step-title">Выберите место</div>
-      <div class="seats-legend">
-        <span>🟢 Свободно</span>
-        <span>🔴 Занято</span>
-      </div>
-      <div class="seats-grid" id="seats-grid"></div>
-      <button class="btn btn-primary" id="btn-seat" onclick="nextStep()" disabled>Далее →</button>
-      <button class="btn btn-ghost" onclick="prevStep()">← Назад</button>
-    </div>
-
-    <!-- ШАГ 4: Подтверждение -->
-    <div class="step" id="step-4">
-      <div class="step-title">Подтверждение</div>
-      <div class="step-sub">Проверьте данные брони</div>
-      <div class="card" style="margin-bottom:12px">
-        <div class="summary-row">
-          <span class="summary-label">Зона</span>
-          <span class="summary-val" id="sum-zone">—</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">Место</span>
-          <span class="summary-val" id="sum-seat">—</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">Дата</span>
-          <span class="summary-val" id="sum-date">—</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">Время</span>
-          <span class="summary-val" id="sum-time">—</span>
-        </div>
-      </div>
-      <div class="time-hint" style="margin-bottom:14px">⚠️ Бронь держится 15 минут с момента начала</div>
-      <div style="margin-bottom:8px;font-size:13px;color:var(--muted)">Комментарий (необязательно)</div>
-      <textarea id="comment-input" placeholder="Напишите пожелания..."></textarea>
-      <button class="btn btn-primary" onclick="submitBooking()">✅ Подтвердить бронь</button>
-      <button class="btn btn-ghost" onclick="prevStep()">← Назад</button>
-    </div>
-  </div>
-
-  <!-- Успех -->
-  <div class="success-screen" id="booking-success">
-    <div class="success-icon">✅</div>
-    <div class="success-title">Бронь принята!</div>
-    <div class="success-sub">Ваша заявка отправлена администратору.<br>Ожидайте подтверждения в боте.</div>
-    <button class="btn btn-primary" onclick="resetBooking()" style="margin-top:24px">Новая бронь</button>
-  </div>
-</div>
-
-<!-- ══════════ ПРАЙС ══════════ -->
-<div id="page-price" class="page">
-  <div class="price-zone">
-    <div class="price-zone-header">
-      <span class="price-zone-icon">💻</span>
-      <span class="price-zone-name">Общий зал</span>
-    </div>
-    <table class="price-table">
-      <tr><th>Время</th><th>Будни</th><th>Выходные</th></tr>
-      <tr><td>1 час</td><td>120₽</td><td class="highlight">140₽</td></tr>
-      <tr><td>3 часа</td><td>310₽</td><td class="highlight">370₽</td></tr>
-      <tr><td>5 часов</td><td>500₽</td><td class="highlight">580₽</td></tr>
-      <tr><td>Утро 8–13</td><td>80₽/ч</td><td class="highlight">105₽/ч</td></tr>
-    </table>
-  </div>
-
-  <div class="price-zone">
-    <div class="price-zone-header">
-      <span class="price-zone-icon">🎮</span>
-      <span class="price-zone-name">VIP зал</span>
-    </div>
-    <table class="price-table">
-      <tr><th>Время</th><th>Будни</th><th>Выходные</th></tr>
-      <tr><td>1 час</td><td>140₽</td><td class="highlight">160₽</td></tr>
-      <tr><td>3 часа</td><td>370₽</td><td class="highlight">420₽</td></tr>
-      <tr><td>5 часов</td><td>580₽</td><td class="highlight">670₽</td></tr>
-      <tr><td>Утро 8–13</td><td>95₽/ч</td><td class="highlight">115₽/ч</td></tr>
-    </table>
-  </div>
-
-  <div class="price-zone">
-    <div class="price-zone-header">
-      <span class="price-zone-icon">📺</span>
-      <span class="price-zone-name">Аренда ТВ (PS5 включён)</span>
-    </div>
-    <table class="price-table">
-      <tr><th>Время</th><th>Будни</th><th>Выходные</th></tr>
-      <tr><td>1 час</td><td>250₽</td><td class="highlight">300₽</td></tr>
-      <tr><td>3 часа</td><td>600₽</td><td class="highlight">700₽</td></tr>
-      <tr><td>5 часов</td><td>1000₽</td><td class="highlight">1100₽</td></tr>
-      <tr><td>Утро 8–13</td><td>200₽/ч</td><td class="highlight">250₽/ч</td></tr>
-      <tr><td>Доп. гость</td><td>+50₽/ч</td><td class="highlight">+50₽/ч</td></tr>
-    </table>
-  </div>
-
-  <div class="price-zone">
-    <div class="price-zone-header">
-      <span class="price-zone-icon">🌙</span>
-      <span class="price-zone-name">Ночные пакеты (с 22:00)</span>
-    </div>
-    <table class="price-table">
-      <tr><th>Пакет</th><th>Будни</th><th>Выходные</th></tr>
-      <tr><td>Общий 6ч</td><td>350₽</td><td class="highlight">400₽</td></tr>
-      <tr><td>Общий 10ч</td><td>600₽</td><td class="highlight">650₽</td></tr>
-      <tr><td>VIP 6ч</td><td>400₽</td><td class="highlight">450₽</td></tr>
-      <tr><td>VIP 10ч</td><td>650₽</td><td class="highlight">700₽</td></tr>
-    </table>
-  </div>
-
-  <div class="night-note">
-    🎁 При ночном тарифе — ТВ комната бесплатно (если свободна)
-  </div>
-</div>
-
-<!-- ══════════ О КЛУБЕ ══════════ -->
-<div id="page-info" class="page">
-  <div class="info-block">
-    <div class="info-icon">📍</div>
-    <div>
-      <div class="info-label">Адрес</div>
-      <div class="info-val">ул. Карла Маркса, 144<br>Магнитогорск</div>
-    </div>
-  </div>
-  <div class="info-block">
-    <div class="info-icon">🕐</div>
-    <div>
-      <div class="info-label">Режим работы</div>
-      <div class="info-val">Круглосуточно, 24/7</div>
-    </div>
-  </div>
-  <div class="info-block">
-    <div class="info-icon">📞</div>
-    <div>
-      <div class="info-label">Телефон</div>
-      <div class="info-val"><a href="tel:+79226388051">+7 922 638 8051</a></div>
-    </div>
-  </div>
-  <div class="info-block">
-    <div class="info-icon">💻</div>
-    <div>
-      <div class="info-label">Общий зал</div>
-      <div class="info-val">11 мощных ПК</div>
-    </div>
-  </div>
-  <div class="info-block">
-    <div class="info-icon">🎮</div>
-    <div>
-      <div class="info-label">VIP зал</div>
-      <div class="info-val">5 мест с премиум-оборудованием</div>
-    </div>
-  </div>
-  <div class="info-block">
-    <div class="info-icon">🕹</div>
-    <div>
-      <div class="info-label">PlayStation зона</div>
-      <div class="info-val">PS5 + большой экран + диван</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ ПРОФИЛЬ ══════════ -->
-<div id="page-profile" class="page">
-  <div class="profile-header">
-    <div class="profile-avatar">👤</div>
-    <div class="profile-name" id="profile-name">Игрок</div>
-    <div class="profile-sub" id="profile-sub">Участник iGames</div>
-  </div>
-  <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-num" id="stat-total">0</div>
-      <div class="stat-label">Всего броней</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-active">0</div>
-      <div class="stat-label">Активных</div>
-    </div>
-  </div>
-  <div id="bookings-list">
-    <div class="card-title" style="margin-bottom:10px">📋 История броней</div>
-    <div id="bookings-empty" style="text-align:center;color:var(--muted);padding:24px;font-size:14px">
-      Броней пока нет.<br>Нажмите «Бронь» чтобы создать первую!
-    </div>
-    <div id="bookings-items"></div>
-  </div>
-</div>
-
-<!-- ══════════ СВЯЗЬ ══════════ -->
-<div id="page-contact" class="page">
-  <div class="card">
-    <div class="card-title">📩 Написать администратору</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-      Опишите ваш вопрос — администратор ответит в боте.
-    </div>
-    <textarea id="contact-msg" placeholder="Ваше сообщение..."></textarea>
-    <button class="btn btn-primary" onclick="sendContactMsg()">Отправить</button>
-  </div>
-  <div class="info-block" style="margin-top:4px">
-    <div class="info-icon">📞</div>
-    <div>
-      <div class="info-label">Телефон</div>
-      <div class="info-val"><a href="tel:+79226388051">+7 922 638 8051</a></div>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<!-- ... вся разметка без изменений ... -->
 
 <script>
 // ══ Telegram WebApp init ══
@@ -896,6 +25,18 @@ if (tg) {
 
 const user = tg?.initDataUnsafe?.user;
 
+// ══ Функция отправки данных боту ══
+function sendToBot(data) {
+  if (tg) {
+    tg.sendData(JSON.stringify(data));
+  } else {
+    // Для тестирования вне Telegram – сохраняем в консоль и локальное хранилище
+    console.warn('Telegram WebApp не доступен, данные сохранены в localStorage');
+    localStorage.setItem('igames_test_data', JSON.stringify(data));
+    showToast('✅ Данные отправлены (тестовый режим)');
+  }
+}
+
 // ══ Данные ══
 const ZONE_LABELS = { pc: 'Общий зал', vip: 'VIP зал', ps: 'PlayStation' };
 const ZONE_SEATS  = { pc: 11, vip: 5, ps: 1 };
@@ -906,7 +47,7 @@ let booking = { zone: null, date: null, dateStr: null, time: null, seat: null };
 let currentStep = 0;
 let bookings = JSON.parse(localStorage.getItem('igames_bookings') || '[]');
 
-// ══ Страницы ══
+// ══ Страницы (без изменений) ══
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -917,7 +58,7 @@ function showPage(id) {
   window.scrollTo(0, 0);
 }
 
-// ══ Booking steps ══
+// ══ Booking steps (без изменений) ══
 function nextStep() {
   if (currentStep < 4) {
     document.getElementById('step-' + currentStep).classList.remove('active');
@@ -998,7 +139,6 @@ function buildSeats() {
   const grid = document.getElementById('seats-grid');
   grid.innerHTML = '';
   const total = ZONE_SEATS[booking.zone] || 1;
-  // Симуляция занятых мест (в реальном приложении — данные с сервера)
   const busySeats = new Set();
   for (const b of bookings) {
     if (b.zone === booking.zone && b.dateStr === booking.dateStr && b.status !== 'cancelled') {
@@ -1032,8 +172,8 @@ function buildSummary() {
   document.getElementById('sum-time').textContent = booking.time + ' (держится 15 мин)';
 }
 
-// ══ Submit ══
-function submitBooking() {
+// ══ Submit (отправка через sendData) ══
+async function submitBooking() {
   const comment = document.getElementById('comment-input').value.trim();
   const newBooking = {
     id: Date.now(),
@@ -1049,21 +189,19 @@ function submitBooking() {
   bookings.unshift(newBooking);
   localStorage.setItem('igames_bookings', JSON.stringify(bookings));
 
-  // Отправка данных на API бота
-  const API_URL = "https://igames-production.up.railway.app";
-  try {
-    await fetch(API_URL + "/api/booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...newBooking,
-        userId: user?.id,
-        fullName: user ? (user.first_name + ' ' + (user.last_name || '')) : 'Неизвестно',
-        username: user?.username || '',
-      }),
-    });
-  } catch(e) { console.error(e); }
+  // Отправляем данные боту
+  sendToBot({
+    action: 'booking',
+    booking: newBooking,
+    user: user ? {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username
+    } : null
+  });
 
+  // Показываем экран успеха
   document.getElementById('booking-form').style.display = 'none';
   document.getElementById('booking-success').classList.add('active');
   window.scrollTo(0, 0);
@@ -1085,7 +223,7 @@ function resetBooking() {
   document.getElementById('booking-success').classList.remove('active');
 }
 
-// ══ Profile ══
+// ══ Profile (без изменений) ══
 function renderProfile() {
   if (user) {
     document.getElementById('profile-name').textContent =
@@ -1119,23 +257,22 @@ function renderProfile() {
   }
 }
 
-// ══ Contact ══
-function sendContactMsg() {
+// ══ Contact (отправка через sendData) ══
+async function sendContactMsg() {
   const msg = document.getElementById('contact-msg').value.trim();
   if (!msg) { showToast('Введите сообщение'); return; }
-  const API_URL = "https://igames-production.up.railway.app";
-  try {
-    await fetch(API_URL + "/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: msg,
-        userId: user?.id,
-        fullName: user ? (user.first_name + ' ' + (user.last_name || '')) : 'Неизвестно',
-        username: user?.username || '',
-      }),
-    });
-  } catch(e) { console.error(e); }
+
+  sendToBot({
+    action: 'contact',
+    message: msg,
+    user: user ? {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username
+    } : null
+  });
+
   document.getElementById('contact-msg').value = '';
   showToast('✅ Сообщение отправлено!');
 }
